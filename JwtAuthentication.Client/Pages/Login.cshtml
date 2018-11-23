@@ -32,6 +32,8 @@
         <div class="alert alert-success">
             You have successfully logged in!
         </div>
+
+        <button onclick="@LogoutFromApp">Logout</button>
     }
     else if (Attempted && !LoggedIn)
     {
@@ -62,9 +64,17 @@
         var token = Storage["__token"];
         if (!string.IsNullOrEmpty(token))
         {
+            Console.WriteLine(token);
             LoggedIn = true;
             Attempted = true;
         }
+    }
+
+    private void LogoutFromApp()
+    {
+        Storage["__token"] = null;
+        LoggedIn = false;
+        Attempted = false;
     }
 
     private async Task SubmitForm()
