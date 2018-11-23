@@ -1,6 +1,10 @@
-﻿@using JwtAuthentication.Shared
-@page "/fetchdata"
+﻿@page "/fetchdata"
+
+@using JwtAuthentication.Shared;
+@using TheKfaktor.BlazorExtensions;
+@using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
 @inject HttpClient Http
+@inject LocalStorage Storage
 
 <h1>Weather forecast</h1>
 
@@ -36,11 +40,11 @@ else
 }
 
 @functions {
-    WeatherForecast[] forecasts;
+    List<WeatherForecast> forecasts;
 
     protected override async Task OnInitAsync()
     {
-        // todo: Update to include the token from localStorage
-        forecasts = await Http.GetJsonAsync<WeatherForecast[]>("api/SampleData/WeatherForecasts");
+        var token = Storage["__token"];
+        forecasts = await Http.SendAsync<List<WeatherForecast>>("api/SampleData/WeatherForecasts", token);
     }
 }
