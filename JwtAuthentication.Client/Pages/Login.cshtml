@@ -1,36 +1,101 @@
-﻿@using JwtAuthentication.Shared
-@page "/login"
+﻿@page "/login"
+@using JwtAuthentication.Shared;
+@using Newtonsoft.Json;
+@using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
+@inject LocalStorage Storage
 @inject HttpClient Http
 
-
 <div class="container">
-    <h1>Log in to JWT Authentication!</h1>
-    <div class="form-group">
-        <label for="email">Email</label>
-        <input type="text" name="email" placeholder="Email" class="form-control" bind="@Email" />
-    </div>
-    <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" name="password" placeholder="Password" class="form-control" bind="@Password" />
-    </div>
+    @if (!LoggedIn)
+    {
+        <h1>Log in to JWT Authentication!</h1>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="text" name="email" placeholder="Email" class="form-control" bind="@Email" />
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" placeholder="Password" class="form-control" bind="@Password" />
+        </div>
 
-    <button onclick="@SubmitForm">Submit</button>
+        <button onclick="@SubmitForm">Submit</button>
+        @if (ShowLoader)
+        {
+            <img src="/images/loader.gif" alt="Logging you in..." />
+        }
+    }
+
+    <br />
+    <br />
+    @if (Attempted && LoggedIn)
+    {
+        <div class="alert alert-success">
+            You have successfully logged in!
+        </div>
+    }
+    else if (Attempted && !LoggedIn)
+    {
+        <div class="alert alert-danger">
+            We were unable to log you in.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Please log in.
+        </div>
+    }
 </div>
 
 @functions {
-public string Email { get; set; } = "";
-public string Password { get; set; } = "";
-public string Token { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Token { get; set; } = "";
 
-private async Task SubmitForm()
-{
-    var vm = new TokenViewModel
+    public bool Attempted { get; set; }
+    public bool LoggedIn { get; set; }
+    public bool ShowLoader { get; set; }
+
+    protected override void OnInit()
     {
-        Email = Email,
-        Password = Password
-    };
-    var response = await Http.PostJsonAsync<object>("http://localhost:57778/api/Token/login", vm);
+        base.OnInit();
+        var token = Storage["__token"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            LoggedIn = true;
+            Attempted = true;
+        }
+    }
 
-    Console.WriteLine(response);
-}
+    private async Task SubmitForm()
+    {
+        ShowLoader = true;
+
+        var vm = new TokenViewModel
+        {
+            Email = Email,
+            Password = Password
+        };
+        try
+        {
+            var response = await Http.PostJsonAsync<TokenResponse>("http://localhost:57778/api/Token/login", vm);
+
+            Attempted = true;
+
+            LoggedIn = response != null;
+
+            if (LoggedIn)
+            {
+                Console.WriteLine(response.ToString());
+                Storage["__token"] = response.Token;
+            }
+        }
+        catch
+        {
+            Attempted = true;
+            LoggedIn = false;
+        }
+
+        ShowLoader = false;
+    }
 }
