@@ -40,6 +40,7 @@ else
 
     protected override async Task OnInitAsync()
     {
+        // todo: Update to include the token from localStorage
         forecasts = await Http.GetJsonAsync<WeatherForecast[]>("api/SampleData/WeatherForecasts");
     }
 }
